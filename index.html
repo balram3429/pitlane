@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -1120,5 +1120,255 @@ document.title = CONFIG.storeName;
 
 handleRoute();
 </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pit Lane</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+
+/* ---- CSS TRIMMED FOR BREVITY ---- */
+/* USE THE EXACT CSS YOU ALREADY PROVIDED */
+/* No change required */
+
+</style>
+</head>
+
+<body>
+
+<script>
+
+const CONFIG = {
+  storeName: "Pit Lane",
+  tagline: "Precision Parts. Race-Proven Performance.",
+  formspreeUrl: "https://formspree.io/f/xyknponj",
+  currency: "₹"
+};
+
+const PRODUCTS = [
+{
+id:1,
+name:"Titanium Lug Nut Set",
+price:4999,
+category:"Wheels & Tyres",
+description:"Forged titanium lug nuts that save weight without compromising grip.",
+images:[
+"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+"https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&q=80"
+],
+stock:12
+},
+{
+id:2,
+name:"Short-Throw Gear Shifter",
+price:8499,
+category:"Drivetrain",
+description:"Reduce your shift throw by 35% with this billet aluminium short shifter.",
+images:[
+"https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&q=80",
+"https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=80"
+],
+stock:5
+},
+{
+id:3,
+name:"Street Coilover Kit",
+price:42999,
+category:"Suspension",
+description:"16-way adjustable damping coilover system.",
+images:[
+"https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=800&q=80"
+],
+stock:3
+},
+{
+id:4,
+name:"Cold Air Intake System",
+price:12500,
+category:"Engine",
+description:"High-flow intake system for improved airflow.",
+images:[
+"https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?w=800&q=80"
+],
+stock:8
+},
+{
+id:5,
+name:"Racing Bucket Seat",
+price:18999,
+category:"Interior",
+description:"FIA compliant racing seat.",
+images:[
+"https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&q=80"
+],
+stock:0
+},
+{
+id:6,
+name:"OBD2 Lap Timer",
+price:7299,
+category:"Electronics",
+description:"GPS powered lap timer with telemetry logging.",
+images:[
+"https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80"
+],
+stock:15
+}
+];
+
+const CART_KEY="Pit_Lane";
+let cart=[];
+
+function loadCart(){
+try{
+cart=JSON.parse(localStorage.getItem(CART_KEY))||[]
+}catch{cart=[]}
+}
+
+function saveCart(){
+localStorage.setItem(CART_KEY,JSON.stringify(cart))
+}
+
+function getProduct(id){
+return PRODUCTS.find(p=>p.id===id)
+}
+
+function cartTotal(){
+return cart.reduce((s,i)=>{
+const p=getProduct(i.id)
+return s+(p?p.price*i.qty:0)
+},0)
+}
+
+function fmt(price){
+return CONFIG.currency+price.toLocaleString("en-IN")
+}
+
+function toast(msg){
+alert(msg)
+}
+
+function addToCart(id,qty=1){
+const existing=cart.find(i=>i.id===id)
+if(existing){
+existing.qty+=qty
+}else{
+cart.push({id,qty})
+}
+saveCart()
+toast("Added to cart")
+}
+
+function navigate(page){
+location.hash="#"+page
+}
+
+async function submitOrder(){
+
+const name=document.getElementById("f-name").value.trim()
+const email=document.getElementById("f-email").value.trim()
+const phone=document.getElementById("f-phone").value.trim()
+const address=document.getElementById("f-address").value.trim()
+const notes=document.getElementById("f-notes").value.trim()
+
+if(!name||!email||!phone||!address){
+toast("Please fill required fields")
+return
+}
+
+if(cart.length===0){
+toast("Cart is empty")
+return
+}
+
+const orderItems=cart.map(i=>{
+const p=getProduct(i.id)
+return `${p.name} × ${i.qty} = ${fmt(p.price*i.qty)}`
+}).join("\n")
+
+const payload={
+_subject:"New Order - Pit Lane Store",
+store:CONFIG.storeName,
+timestamp:new Date().toLocaleString(),
+
+customer_name:name,
+customer_email:email,
+customer_phone:phone,
+delivery_address:address,
+
+order_notes:notes||"None",
+
+order_items:orderItems,
+total_amount:fmt(cartTotal())
+}
+
+try{
+
+const res=await fetch(CONFIG.formspreeUrl,{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+Accept:"application/json"
+},
+body:JSON.stringify(payload)
+})
+
+if(res.ok){
+
+cart=[]
+saveCart()
+
+document.getElementById("success-banner").style.display="flex"
+
+setTimeout(()=>{
+document.getElementById("success-banner").style.display="none"
+location.hash="#home"
+},3000)
+
+}else{
+toast("Order failed")
+}
+
+}catch(err){
+toast("Network error")
+}
+
+}
+
+loadCart()
+
+</script>
+
+<div style="padding:40px;font-family:DM Sans">
+
+<h1>Pit Lane Checkout</h1>
+
+<input id="f-name" placeholder="Full Name"><br><br>
+<input id="f-email" placeholder="Email"><br><br>
+<input id="f-phone" placeholder="Phone"><br><br>
+
+<textarea id="f-address" placeholder="Address"></textarea><br><br>
+
+<textarea id="f-notes" placeholder="Notes"></textarea><br><br>
+
+<button onclick="submitOrder()">Place Order</button>
+
+</div>
+
+<div id="success-banner" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;color:white;font-size:28px">
+Order Received!
+</div>
+
 </body>
 </html>
